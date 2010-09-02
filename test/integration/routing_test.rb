@@ -15,9 +15,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require "#{File.dirname(__FILE__)}/../test_helper"
+require File.expand_path('../../test_helper', __FILE__)
 
-class RoutingTest < ActionController::IntegrationTest
+class RoutingTest < ActionDispatch::IntegrationTest
   context "activities" do
     should_route :get, "/activity", :controller => 'activities', :action => 'index', :id => nil
     should_route :get, "/activity.atom", :controller => 'activities', :action => 'index', :id => nil, :format => 'atom'

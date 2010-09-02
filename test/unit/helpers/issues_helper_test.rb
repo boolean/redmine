@@ -15,13 +15,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.dirname(__FILE__) + '/../../test_helper'
+require File.expand_path('../../../test_helper', __FILE__)
 
 class IssuesHelperTest < HelperTestCase
   include ApplicationHelper
   include IssuesHelper
 
-  include ActionController::Assertions::SelectorAssertions
+  include ActionDispatch::Assertions::SelectorAssertions
   fixtures :all
 
   # Used by assert_select

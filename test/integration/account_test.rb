@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require "#{File.dirname(__FILE__)}/../test_helper"
+require File.expand_path('../../test_helper', __FILE__)
 
 begin
   require 'mocha'
@@ -23,7 +23,7 @@ rescue
   # Won't run some tests
 end
 
-class AccountTest < ActionController::IntegrationTest
+class AccountTest < ActionDispatch::IntegrationTest
   fixtures :users, :roles
 
   # Replace this with your real tests.

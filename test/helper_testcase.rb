@@ -7,7 +7,7 @@ end
 class HelperTestCase < ActiveSupport::TestCase
 
   # Add other helpers here if you need them
-  include ActionView::Helpers::ActiveRecordHelper
+  include ActionView::Helpers::ActiveModelHelper
   include ActionView::Helpers::TagHelper
   include ActionView::Helpers::FormTagHelper
   include ActionView::Helpers::FormOptionsHelper

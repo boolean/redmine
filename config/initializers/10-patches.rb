@@ -1,4 +1,4 @@
-
+require File.expand_path('../../../lib/redmine/i18n', __FILE__)
 require 'active_record'
 
 module ActiveRecord

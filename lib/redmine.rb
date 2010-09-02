@@ -9,7 +9,16 @@ require 'redmine/themes'
 require 'redmine/hook'
 require 'redmine/plugin'
 require 'redmine/wiki_formatting'
+require 'redmine/wiki_formatting/macros'
+require 'redmine/wiki_formatting/textile/formatter'
+require 'redmine/wiki_formatting/textile/helper'
 require 'redmine/scm/base'
+require 'redmine/info'
+require 'redmine/access_keys'
+require 'redmine/export/pdf'
+require 'redmine/views/other_formats_builder'
+require 'redmine/views/my_page/block'
+require 'redmine/platform'
 
 begin
   require_library_or_gem 'RMagick' unless Object.const_defined?(:Magick)

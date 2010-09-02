@@ -15,13 +15,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.dirname(__FILE__) + '/../../../../test_helper'
+require File.expand_path('../../../../../test_helper', __FILE__)
 
 
 
 class Redmine::MenuManager::MenuHelperTest < HelperTestCase
   include Redmine::MenuManager::MenuHelper
-  include ActionController::Assertions::SelectorAssertions
+  include ActionDispatch::Assertions::SelectorAssertions
   fixtures :users, :members, :projects, :enabled_modules
 
   # Used by assert_select
