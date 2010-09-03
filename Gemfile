@@ -31,6 +31,7 @@ gem 'mysql2'
 #
 group :test do
   gem 'shoulda', :git => "git://github.com/thoughtbot/shoulda.git"
+  gem 'edavis10-object_daddy', :require => "object_daddy"
   gem 'mocha'
 end
 
