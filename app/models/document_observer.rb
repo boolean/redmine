@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class DocumentObserver < ActiveRecord::Observer
-  def after_create(document)
-    Mailer.deliver_document_added(document) if Setting.notified_events.include?('document_added')
+  def after_save(document)
+    Mailer.document_added(document).deliver if Setting.notified_events.include?('document_added')
   end
 end

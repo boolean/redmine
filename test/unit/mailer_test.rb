@@ -33,7 +33,7 @@ class MailerTest < ActiveSupport::TestCase
     Setting.protocol = 'https'
     
     journal = Journal.find(2)
-    assert Mailer.deliver_issue_edit(journal)
+    assert Mailer.issue_edit(journal).deliver
     
     mail = ActionMailer::Base.deliveries.last
     assert_kind_of TMail::Mail, mail
@@ -55,7 +55,7 @@ class MailerTest < ActiveSupport::TestCase
     Redmine::Utils.relative_url_root = '/rdm'
     
     journal = Journal.find(2)
-    assert Mailer.deliver_issue_edit(journal)
+    assert Mailer.issue_edit(journal).deliver
     
     mail = ActionMailer::Base.deliveries.last
     assert_kind_of TMail::Mail, mail
@@ -80,10 +80,10 @@ class MailerTest < ActiveSupport::TestCase
     Redmine::Utils.relative_url_root = nil
     
     journal = Journal.find(2)
-    assert Mailer.deliver_issue_edit(journal)
+    assert Mailer.issue_edit(journal).deliver
     
     mail = ActionMailer::Base.deliveries.last
-    assert_kind_of TMail::Mail, mail
+    assert_kind_of Mail::Message, mail
 
     assert_select_email do
       # link to the main ticket
@@ -100,7 +100,7 @@ class MailerTest < ActiveSupport::TestCase
   
   def test_email_headers
     issue = Issue.find(1)
-    Mailer.deliver_issue_add(issue)
+    Mailer.issue_add(issue).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert_equal 'bulk', mail.header_string('Precedence')
@@ -110,9 +110,9 @@ class MailerTest < ActiveSupport::TestCase
   def test_plain_text_mail
     Setting.plain_text_mail = 1
     journal = Journal.find(2)
-    Mailer.deliver_issue_edit(journal)
+    Mailer.issue_edit(journal).deliver
     mail = ActionMailer::Base.deliveries.last
-    assert_equal "text/plain", mail.content_type
+    assert_equal "text/plain; charset=UTF-8", mail.content_type
     assert_equal 0, mail.parts.size
     assert !mail.encoded.include?('href')
   end
@@ -120,7 +120,7 @@ class MailerTest < ActiveSupport::TestCase
   def test_html_mail
     Setting.plain_text_mail = 0
     journal = Journal.find(2)
-    Mailer.deliver_issue_edit(journal)
+    Mailer.issue_edit(journal).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_equal 2, mail.parts.size
     assert mail.encoded.include?('href')
@@ -132,7 +132,7 @@ class MailerTest < ActiveSupport::TestCase
     end
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal 'Redmine app', mail.from_addrs.first.name
+    assert_equal 'redmine@example.net', mail.from_addrs.first
   end
   
   def test_should_not_send_email_without_recipient
@@ -144,7 +144,7 @@ class MailerTest < ActiveSupport::TestCase
     user.pref[:no_self_notified] = false
     user.pref.save
     User.current = user
-    Mailer.deliver_news_added(news.reload)
+    Mailer.news_added(news.reload).deliver
     assert_equal 1, last_email.bcc.size
 
     # nobody to notify
@@ -152,13 +152,13 @@ class MailerTest < ActiveSupport::TestCase
     user.pref.save
     User.current = user
     ActionMailer::Base.deliveries.clear
-    Mailer.deliver_news_added(news.reload)
+    Mailer.news_added(news.reload).deliver
     assert ActionMailer::Base.deliveries.empty?
   end
 
   def test_issue_add_message_id
     issue = Issue.find(1)
-    Mailer.deliver_issue_add(issue)
+    Mailer.issue_add(issue).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert_equal Mailer.message_id_for(issue), mail.message_id
@@ -167,7 +167,7 @@ class MailerTest < ActiveSupport::TestCase
   
   def test_issue_edit_message_id
     journal = Journal.find(1)
-    Mailer.deliver_issue_edit(journal)
+    Mailer.issue_edit(journal).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert_equal Mailer.message_id_for(journal), mail.message_id
@@ -176,7 +176,7 @@ class MailerTest < ActiveSupport::TestCase
   
   def test_message_posted_message_id
     message = Message.find(1)
-    Mailer.deliver_message_posted(message)
+    Mailer.message_posted(message).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert_equal Mailer.message_id_for(message), mail.message_id
@@ -189,7 +189,7 @@ class MailerTest < ActiveSupport::TestCase
   
   def test_reply_posted_message_id
     message = Message.find(3)
-    Mailer.deliver_message_posted(message)
+    Mailer.message_posted(message).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert_equal Mailer.message_id_for(message), mail.message_id
@@ -208,13 +208,13 @@ class MailerTest < ActiveSupport::TestCase
     end
     
     should "notify project members" do
-      assert Mailer.deliver_issue_add(@issue)
+      assert Mailer.issue_add(@issue).deliver
       assert last_email.bcc.include?('dlopper@somenet.foo')
     end
     
     should "not notify project members that are not allow to view the issue" do
       Role.find(2).remove_permission!(:view_issues)
-      assert Mailer.deliver_issue_add(@issue)
+      assert Mailer.issue_add(@issue).deliver
       assert !last_email.bcc.include?('dlopper@somenet.foo')
     end
     
@@ -227,7 +227,7 @@ class MailerTest < ActiveSupport::TestCase
       user.save
       
       Watcher.create!(:watchable => @issue, :user => user)
-      assert Mailer.deliver_issue_add(@issue)
+      assert Mailer.issue_add(@issue).deliver
       assert last_email.bcc.include?(user.mail)
     end
     
@@ -235,7 +235,7 @@ class MailerTest < ActiveSupport::TestCase
       user = User.find(9)
       Watcher.create!(:watchable => @issue, :user => user)
       Role.non_member.remove_permission!(:view_issues)
-      assert Mailer.deliver_issue_add(@issue)
+      assert Mailer.issue_add(@issue).deliver
       assert !last_email.bcc.include?(user.mail)
     end
   end
@@ -245,7 +245,7 @@ class MailerTest < ActiveSupport::TestCase
     issue = Issue.find(1)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_issue_add(issue)
+      assert Mailer.issue_add(issue).deliver
     end
   end
 
@@ -253,7 +253,7 @@ class MailerTest < ActiveSupport::TestCase
     journal = Journal.find(1)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_issue_edit(journal)
+      assert Mailer.issue_edit(journal).deliver
     end
   end
   
@@ -261,7 +261,7 @@ class MailerTest < ActiveSupport::TestCase
     document = Document.find(1)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_document_added(document)
+      assert Mailer.document_added(document).deliver
     end
   end
   
@@ -269,20 +269,20 @@ class MailerTest < ActiveSupport::TestCase
     attachements = [ Attachment.find_by_container_type('Document') ]
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_attachments_added(attachements)
+      assert Mailer.attachments_added(attachements).deliver
     end
   end
   
   def test_version_file_added
     attachements = [ Attachment.find_by_container_type('Version') ]
-    assert Mailer.deliver_attachments_added(attachements)
+    assert Mailer.attachments_added(attachements).deliver
     assert_not_nil last_email.bcc
     assert last_email.bcc.any?
   end
   
   def test_project_file_added
     attachements = [ Attachment.find_by_container_type('Project') ]
-    assert Mailer.deliver_attachments_added(attachements)
+    assert Mailer.attachments_added(attachements).deliver
     assert_not_nil last_email.bcc
     assert last_email.bcc.any?
   end
@@ -291,7 +291,7 @@ class MailerTest < ActiveSupport::TestCase
     news = News.find(:first)
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_news_added(news)
+      assert Mailer.news_added(news).deliver
     end
   end
   
@@ -301,7 +301,7 @@ class MailerTest < ActiveSupport::TestCase
     recipients = recipients.compact.uniq
     valid_languages.each do |lang|
       Setting.default_language = lang.to_s
-      assert Mailer.deliver_message_posted(message)
+      assert Mailer.message_posted(message).deliver
     end
   end
   
@@ -310,7 +310,7 @@ class MailerTest < ActiveSupport::TestCase
     valid_languages.each do |lang|
       user.update_attribute :language, lang.to_s
       user.reload
-      assert Mailer.deliver_account_information(user, 'pAsswORd')
+      assert Mailer.account_information(user, 'pAsswORd').deliver
     end
   end
 
@@ -319,7 +319,7 @@ class MailerTest < ActiveSupport::TestCase
     valid_languages.each do |lang|
       token.user.update_attribute :language, lang.to_s
       token.reload
-      assert Mailer.deliver_lost_password(token)
+      assert Mailer.lost_password(token).deliver
     end
   end
 
@@ -332,7 +332,7 @@ class MailerTest < ActiveSupport::TestCase
       token.user.update_attribute :language, lang.to_s
       token.reload
       ActionMailer::Base.deliveries.clear
-      assert Mailer.deliver_register(token)
+      assert Mailer.register(token).deliver
       mail = ActionMailer::Base.deliveries.last
       assert mail.body.include?("https://redmine.foo/account/activate?token=#{token.value}")
     end
@@ -368,7 +368,7 @@ class MailerTest < ActiveSupport::TestCase
     # Send an email to a french user
     user = User.find(1)
     user.language = 'fr'
-    Mailer.deliver_account_activated(user)
+    Mailer.account_activated(user).deliver
     mail = ActionMailer::Base.deliveries.last
     assert mail.body.include?('Votre compte')
     

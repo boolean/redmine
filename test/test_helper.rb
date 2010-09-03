@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 ENV["RAILS_ENV"] = "test"
+require File.expand_path('../../lib/ar_condition', __FILE__)
 require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
 require 'rails/test_help'
 require File.expand_path(File.dirname(__FILE__) + '/helper_testcase')

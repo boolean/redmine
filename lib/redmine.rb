@@ -1,6 +1,7 @@
 require 'redmine/access_control'
 require 'redmine/menu_manager'
 require 'redmine/activity'
+require 'redmine/activity/fetcher'
 require 'redmine/search'
 require 'redmine/custom_field_format'
 require 'redmine/mime_type'
@@ -19,6 +20,9 @@ require 'redmine/export/pdf'
 require 'redmine/views/other_formats_builder'
 require 'redmine/views/my_page/block'
 require 'redmine/platform'
+require 'redmine/helpers/calendar'
+require 'redmine/default_data/loader'
+require 'redmine/utils'
 
 begin
   require_library_or_gem 'RMagick' unless Object.const_defined?(:Magick)
