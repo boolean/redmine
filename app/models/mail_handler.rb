@@ -296,11 +296,11 @@ class MailHandler < ActionMailer::Base
   # Creates a user account for the +email+ sender
   def self.create_user_from_email(email)
     addr = email.from_addrs.to_a.first
-    if addr && !addr.spec.blank?
+    if addr && !addr.blank?
       user = User.new
-      user.mail = addr.spec
+      user.mail = addr
       
-      names = addr.name.blank? ? addr.spec.gsub(/@.*$/, '').split('.') : addr.name.split
+      names = addr.gsub(/@.*$/, '').split('.')
       user.firstname = names.shift
       user.lastname = names.join(' ')
       user.lastname = '-' if user.lastname.blank?
