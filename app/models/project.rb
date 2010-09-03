@@ -36,7 +36,7 @@ class Project < ActiveRecord::Base
   has_many :issue_changes, :through => :issues, :source => :journals
   has_many :versions, :dependent => :destroy, :order => "#{Version.table_name}.effective_date DESC, #{Version.table_name}.name DESC"
   has_many :time_entries, :dependent => :delete_all
-  has_many :queries, :dependent => :delete_all
+  has_many :custom_queries, :dependent => :delete_all
   has_many :documents, :dependent => :destroy
   has_many :news, :dependent => :delete_all, :include => :author
   has_many :issue_categories, :dependent => :delete_all, :order => "#{IssueCategory.table_name}.name"
@@ -466,7 +466,7 @@ class Project < ActiveRecord::Base
   def copy(project, options={})
     project = project.is_a?(Project) ? project : Project.find(project)
     
-    to_be_copied = %w(wiki versions issue_categories issues members queries boards)
+    to_be_copied = %w(wiki versions issue_categories issues members custom_queries boards)
     to_be_copied = to_be_copied & options[:only].to_a unless options[:only].nil?
     
     Project.transaction do
@@ -635,12 +635,12 @@ class Project < ActiveRecord::Base
 
   # Copies queries from +project+
   def copy_queries(project)
-    project.queries.each do |query|
+    project.custom_queries.each do |query|
       new_query = Query.new
       new_query.attributes = query.attributes.dup.except("id", "project_id", "sort_criteria")
       new_query.sort_criteria = query.sort_criteria if query.sort_criteria
       new_query.project = self
-      self.queries << new_query
+      self.custom_queries << new_query
     end
   end
 

@@ -10,12 +10,12 @@ module ObjectDaddyHelpers
   end
 
   def User.spawn_with_protected(attributes={})
-    User.new(attributes)
+    User.spawn(attributes)
   end
 
   # Generate the default Query
-  def Query.generate_default!(attributes={})
-    query = Query.new(attributes)
+  def CustomQuery.generate_default!(attributes={})
+    query = CustomQuery.spawn(attributes)
     query.name ||= '_'
     query.save!
     query
@@ -23,7 +23,7 @@ module ObjectDaddyHelpers
 
   # Generate an issue for a project, using it's trackers
   def Issue.generate_for_project!(project, attributes={})
-    issue = Issue.new(attributes) do |issue|
+    issue = Issue.spawn(attributes) do |issue|
       issue.project = project
     end
     issue.tracker = project.trackers.first unless project.trackers.empty?

@@ -18,7 +18,7 @@
 module QueriesHelper
   
   def operators_for_select(filter_type)
-    Query.operators_by_filter_type[filter_type].collect {|o| [l(Query.operators[o]), o]}
+    CustomQuery.operators_by_filter_type[filter_type].collect {|o| [l(CustomQuery.operators[o]), o]}
   end
   
   def column_header(column)
@@ -69,14 +69,14 @@ module QueriesHelper
     if !params[:query_id].blank?
       cond = "project_id IS NULL"
       cond << " OR project_id = #{@project.id}" if @project
-      @query = Query.find(params[:query_id], :conditions => cond)
+      @query = CustomQuery.find(params[:query_id], :conditions => cond)
       @query.project = @project
       session[:query] = {:id => @query.id, :project_id => @query.project_id}
       sort_clear
     else
       if api_request? || params[:set_filter] || session[:query].nil? || session[:query][:project_id] != (@project ? @project.id : nil)
         # Give it a name, required to be valid
-        @query = Query.new(:name => "_")
+        @query = CustomQuery.new(:name => "_")
         @query.project = @project
         if params[:fields] and params[:fields].is_a? Array
           params[:fields].each do |field|
@@ -91,8 +91,8 @@ module QueriesHelper
         @query.column_names = params[:query] && params[:query][:column_names]
         session[:query] = {:project_id => @query.project_id, :filters => @query.filters, :group_by => @query.group_by, :column_names => @query.column_names}
       else
-        @query = Query.find_by_id(session[:query][:id]) if session[:query][:id]
-        @query ||= Query.new(:name => "_", :project => @project, :filters => session[:query][:filters], :group_by => session[:query][:group_by], :column_names => session[:query][:column_names])
+        @query = CustomQuery.find_by_id(session[:query][:id]) if session[:query][:id]
+        @query ||= CustomQuery.new(:name => "_", :project => @project, :filters => session[:query][:filters], :group_by => session[:query][:group_by], :column_names => session[:query][:column_names])
         @query.project = @project
       end
     end

@@ -70,7 +70,8 @@ class QueryCustomFieldColumn < QueryColumn
   end
 end
 
-class Query < ActiveRecord::Base
+class CustomQuery < ActiveRecord::Base
+  set_table_name :queries
   class StatementInvalid < ::ActiveRecord::StatementInvalid
   end
   
@@ -276,7 +277,7 @@ class Query < ActiveRecord::Base
 
   def available_columns
     return @available_columns if @available_columns
-    @available_columns = Query.available_columns
+    @available_columns = CustomQuery.available_columns
     @available_columns += (project ? 
                             project.all_issue_custom_fields :
                             IssueCustomField.find(:all)
@@ -479,7 +480,7 @@ class Query < ActiveRecord::Base
     order_option = nil if order_option.blank?
     
     Issue.find :all, :include => ([:status, :project] + (options[:include] || [])).uniq,
-                     :conditions => Query.merge_conditions(statement, options[:conditions]),
+                     :conditions => CustomQuery.merge_conditions(statement, options[:conditions]),
                      :order => order_option,
                      :limit  => options[:limit],
                      :offset => options[:offset]
@@ -503,7 +504,7 @@ class Query < ActiveRecord::Base
   # Valid options are :conditions
   def versions(options={})
     Version.find :all, :include => :project,
-                       :conditions => Query.merge_conditions(project_statement, options[:conditions])
+                       :conditions => CustomQuery.merge_conditions(project_statement, options[:conditions])
   rescue ::ActiveRecord::StatementInvalid => e
     raise StatementInvalid.new(e.message)
   end

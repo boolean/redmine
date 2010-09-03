@@ -42,7 +42,7 @@ class ProjectTest < ActiveSupport::TestCase
     should_have_many :issue_changes, :through => :issues
     should_have_many :versions
     should_have_many :time_entries
-    should_have_many :queries
+    should_have_many :custom_queries
     should_have_many :documents
     should_have_many :news
     should_have_many :issue_categories
@@ -743,11 +743,11 @@ class ProjectTest < ActiveSupport::TestCase
 
     should "copy project specific queries" do
       assert @project.valid?
-      assert @project.queries.empty?
+      assert @project.custom_queries.empty?
       assert @project.copy(@source_project)
 
-      assert_equal @source_project.queries.size, @project.queries.size
-      @project.queries.each do |query|
+      assert_equal @source_project.custom_queries.size, @project.custom_queries.size
+      @project.custom_queries.each do |query|
         assert query
         assert_equal @project, query.project
       end

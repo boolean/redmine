@@ -28,7 +28,7 @@ class IssuesController < ApplicationController
   before_filter :build_new_issue_from_params, :only => [:new, :create]
   accept_key_auth :index, :show
 
-  rescue_from Query::StatementInvalid, :with => :query_statement_invalid
+  rescue_from CustomQuery::StatementInvalid, :with => :query_statement_invalid
   
   helper :journals
   helper :projects
