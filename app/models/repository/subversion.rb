@@ -17,7 +17,7 @@
 
 require 'redmine/scm/adapters/subversion_adapter'
 
-class Repository::Subversion < Repository
+class Subversion < Repository
   attr_protected :root_url
   validates_presence_of :url
   validates_format_of :url, :with => /^(http|https|svn(\+[^\s:\/\\]+)?|file):\/\/.+/i
