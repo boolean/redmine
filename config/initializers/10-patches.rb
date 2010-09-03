@@ -1,14 +1,12 @@
 require File.expand_path('../../../lib/redmine/i18n', __FILE__)
 require 'active_record'
 
-module ActiveRecord
-  class Base
-    include Redmine::I18n
-    
-    # Translate attribute names for validation errors display
-    def self.human_attribute_name(attr)
-      l("field_#{attr.to_s.gsub(/_id$/, '')}")
-    end
+module ActiveModel
+  include Redmine::I18n
+  
+  # Translate attribute names for validation errors display
+  def self.human_attribute_name(attr)
+    l("field_#{attr.to_s.gsub(/_id$/, '')}")
   end
 end
 
