@@ -696,7 +696,7 @@ class IssueTest < ActiveSupport::TestCase
     
     before = Issue.on_active_project.length
     # test inclusion to results
-    issue = Issue.generate_for_project!(Project.find(1), :tracker => Project.find(2).trackers.first)
+    issue = Issue.generate_for_project!(Project.find(1), :tracker => Project.find(2).trackers.first, :author => User.find(1), :subject => "hello world")
     assert_equal before + 1, Issue.on_active_project.length
 
     # Move to an archived project
