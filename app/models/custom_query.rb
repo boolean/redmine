@@ -71,7 +71,6 @@ class QueryCustomFieldColumn < QueryColumn
 end
 
 class CustomQuery < ActiveRecord::Base
-  set_table_name :queries
   class StatementInvalid < ::ActiveRecord::StatementInvalid
   end
   

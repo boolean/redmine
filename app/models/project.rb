@@ -634,9 +634,9 @@ class Project < ActiveRecord::Base
   end
 
   # Copies queries from +project+
-  def copy_queries(project)
+  def copy_custom_queries(project)
     project.custom_queries.each do |query|
-      new_query = Query.new
+      new_query = CustomQuery.new
       new_query.attributes = query.attributes.dup.except("id", "project_id", "sort_criteria")
       new_query.sort_criteria = query.sort_criteria if query.sort_criteria
       new_query.project = self
