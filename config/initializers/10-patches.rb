@@ -10,31 +10,35 @@ module ActiveModel
   end
 end
 
-module ActiveRecord
+module ActiveModel
   class Errors
     def full_messages(options = {})
       full_messages = []
+      each do |attribute, messages|
+        messages = Array.wrap(messages)
+        next if messages.empty?
 
-      @errors.each_key do |attr|
-        @errors[attr].each do |message|
-          next unless message
-
-          if attr == "base"
-            full_messages << message
-          elsif attr == "custom_values"
-            # Replace the generic "custom values is invalid"
-            # with the errors on custom values
-            @base.custom_values.each do |value|
-              value.errors.each do |attr, msg|
-                full_messages << value.custom_field.name + ' ' + msg
-              end
+        if attribute == :base
+          messages.each {|m| full_messages << m }
+        elsif attribute == :custom_values
+          # Replace the generic "custom values is invalid"
+          # with the errors on custom values
+          @base.custom_values.each do |value|
+            value.errors.each do |attr, msg|
+              full_messages << value.custom_field.name + " " + msg
             end
-          else
-            attr_name = @base.class.human_attribute_name(attr)
-            full_messages << attr_name + ' ' + message.to_s
+          end
+        else
+          attr_name = attribute.to_s.gsub('.', '_').humanize
+          attr_name = @base.class.human_attribute_name(attribute, :default => attr_name)
+          options = { :default => "%{attribute} %{message}", :attribute => attr_name }
+
+          messages.each do |m|
+            full_messages << I18n.t(:"errors.format", options.merge(:message => m))
           end
         end
       end
+
       full_messages
     end
   end
