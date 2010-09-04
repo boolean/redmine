@@ -5,6 +5,7 @@ class StubController < ApplicationController
 end
 
 class HelperTestCase < ActiveSupport::TestCase
+  attr_reader :controller
 
   # Add other helpers here if you need them
   include ActionView::Helpers::ActiveModelHelper
