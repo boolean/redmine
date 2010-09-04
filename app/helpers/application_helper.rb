@@ -19,6 +19,7 @@ require 'forwardable'
 require 'cgi'
 
 module ApplicationHelper
+  include Rails.application.routes.url_helpers
   include Redmine::WikiFormatting::Macros::Definitions
   include Redmine::I18n
   include GravatarHelper::PublicMethods
