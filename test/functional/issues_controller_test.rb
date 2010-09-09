@@ -44,7 +44,7 @@ class IssuesControllerTest < ActionController::TestCase
            :time_entries,
            :journals,
            :journal_details,
-           :queries
+           :custom_queries
   
   def setup
     @controller = IssuesController.new
@@ -222,7 +222,7 @@ class IssuesControllerTest < ActionController::TestCase
     
     # query should use specified columns
     query = assigns(:query)
-    assert_kind_of Query, query
+    assert_kind_of CustomQuery, query
     assert_equal columns, query.column_names.map(&:to_s)
     
     # columns should be stored in session
@@ -665,7 +665,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal '125', issue.custom_value_for(2).value
     
     mail = ActionMailer::Base.deliveries.last
-    assert_kind_of TMail::Mail, mail
+    assert_kind_of Mail::Message, mail
     assert mail.subject.starts_with?("[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}]")
     assert mail.body.include?("Subject changed from #{old_subject} to #{new_subject}")
   end

@@ -157,7 +157,7 @@ class AccountControllerTest < ActionController::TestCase
   def test_logout
     @request.session[:user_id] = 2
     get :logout
-    assert_redirected_to ''
+    assert_redirected_to '/'
     assert_nil @request.session[:user_id]
   end
 

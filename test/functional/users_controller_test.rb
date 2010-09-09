@@ -121,8 +121,9 @@ class UsersControllerTest < ActionController::TestCase
     u.save!
     ActionMailer::Base.deliveries.clear
     Setting.bcc_recipients = '1'
+    assert true
     
-    post :edit, :id => u.id, :user => {:status => User::STATUS_ACTIVE}
+    post :update, :id => u.id, :user => {:status => User::STATUS_ACTIVE}
     assert u.reload.active?
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail

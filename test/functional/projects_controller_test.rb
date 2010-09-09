@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 require File.expand_path('../../test_helper', __FILE__)
-require 'projects_controller'
+#require 'projects_controller'
 
 # Re-raise errors caught by the controller.
 class ProjectsController; def rescue_action(e) raise e end; end
@@ -297,7 +297,7 @@ class ProjectsControllerTest < ActionController::TestCase
     @request.session[:user_id] = 2 # manager
     post :edit, :id => 1, :project => {:name => 'Test changed name',
                                        :issue_custom_field_ids => ['']}
-    assert_redirected_to 'projects/ecookbook/settings'
+    assert_redirected_to '/projects/ecookbook/settings'
     project = Project.find(1)
     assert_equal 'Test changed name', project.name
   end
@@ -313,7 +313,7 @@ class ProjectsControllerTest < ActionController::TestCase
   def test_post_destroy
     @request.session[:user_id] = 1 # admin
     post :destroy, :id => 1, :confirm => 1
-    assert_redirected_to 'admin/projects'
+    assert_redirected_to '/admin/projects'
     assert_nil Project.find_by_id(1)
   end
   
@@ -327,7 +327,7 @@ class ProjectsControllerTest < ActionController::TestCase
       post :add_file, :id => 1, :version_id => '',
            :attachments => {'1' => {'file' => uploaded_test_file('testfile.txt', 'text/plain')}}
     end
-    assert_redirected_to 'projects/ecookbook/files'
+    assert_redirected_to '/projects/ecookbook/files'
     a = Attachment.find(:first, :order => 'created_on DESC')
     assert_equal 'testfile.txt', a.filename
     assert_equal Project.find(1), a.container
@@ -347,7 +347,7 @@ class ProjectsControllerTest < ActionController::TestCase
       post :add_file, :id => 1, :version_id => '2',
            :attachments => {'1' => {'file' => uploaded_test_file('testfile.txt', 'text/plain')}}
     end
-    assert_redirected_to 'projects/ecookbook/files'
+    assert_redirected_to '/projects/ecookbook/files'
     a = Attachment.find(:first, :order => 'created_on DESC')
     assert_equal 'testfile.txt', a.filename
     assert_equal Version.find(2), a.container
@@ -356,7 +356,7 @@ class ProjectsControllerTest < ActionController::TestCase
   def test_archive
     @request.session[:user_id] = 1 # admin
     post :archive, :id => 1
-    assert_redirected_to 'admin/projects'
+    assert_redirected_to '/admin/projects'
     assert !Project.find(1).active?
   end
   
@@ -364,7 +364,7 @@ class ProjectsControllerTest < ActionController::TestCase
     @request.session[:user_id] = 1 # admin
     Project.find(1).archive
     post :unarchive, :id => 1
-    assert_redirected_to 'admin/projects'
+    assert_redirected_to '/admin/projects'
     assert Project.find(1).active?
   end
   
@@ -402,7 +402,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
   def test_jump_should_redirect_to_active_tab
     get :show, :id => 1, :jump => 'issues'
-    assert_redirected_to 'projects/ecookbook/issues'
+    assert_redirected_to '/projects/ecookbook/issues'
   end
   
   def test_jump_should_not_redirect_to_inactive_tab
@@ -436,7 +436,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
     delete :reset_activities, :id => 1
     assert_response :redirect
-    assert_redirected_to 'projects/ecookbook/settings/activities'
+    assert_redirected_to '/projects/ecookbook/settings/activities'
 
     assert_nil TimeEntryActivity.find_by_id(project_activity.id)
     assert_nil TimeEntryActivity.find_by_id(project_activity_two.id)
@@ -452,11 +452,11 @@ class ProjectsControllerTest < ActionController::TestCase
                                              })
     assert project_activity.save
     assert TimeEntry.update_all("activity_id = '#{project_activity.id}'", ["project_id = ? AND activity_id = ?", 1, 9])
-    assert 3, TimeEntry.find_all_by_activity_id_and_project_id(project_activity.id, 1).size
+    assert_equal 3, TimeEntry.find_all_by_activity_id_and_project_id(project_activity.id, 1).size
     
     delete :reset_activities, :id => 1
     assert_response :redirect
-    assert_redirected_to 'projects/ecookbook/settings/activities'
+    assert_redirected_to '/projects/ecookbook/settings/activities'
 
     assert_nil TimeEntryActivity.find_by_id(project_activity.id)
     assert_equal 0, TimeEntry.find_all_by_activity_id_and_project_id(project_activity.id, 1).size, "TimeEntries still assigned to project specific activity"
@@ -475,7 +475,7 @@ class ProjectsControllerTest < ActionController::TestCase
     }
 
     assert_response :redirect
-    assert_redirected_to 'projects/ecookbook/settings/activities'
+    assert_redirected_to '/projects/ecookbook/settings/activities'
 
     # Created project specific activities...
     project = Project.find('ecookbook')
@@ -538,7 +538,7 @@ class ProjectsControllerTest < ActionController::TestCase
     }
 
     assert_response :redirect
-    assert_redirected_to 'projects/ecookbook/settings/activities'
+    assert_redirected_to '/projects/ecookbook/settings/activities'
 
     # Created project specific activities...
     project = Project.find('ecookbook')
@@ -601,6 +601,7 @@ class ProjectsControllerTest < ActionController::TestCase
       # Adds a project stylesheet
       stylesheet_link_tag(context[:project].identifier) if context[:project]
     end
+    attr_reader :controller
   end
   # Don't use this hook now
   Redmine::Hook.clear_listeners
