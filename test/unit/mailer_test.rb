@@ -36,7 +36,7 @@ class MailerTest < ActiveSupport::TestCase
     assert Mailer.issue_edit(journal).deliver
     
     mail = ActionMailer::Base.deliveries.last
-    assert_kind_of TMail::Mail, mail
+    assert_kind_of Mail::Message, mail
     
     assert_select_email do
       # link to the main ticket
@@ -58,7 +58,7 @@ class MailerTest < ActiveSupport::TestCase
     assert Mailer.issue_edit(journal).deliver
     
     mail = ActionMailer::Base.deliveries.last
-    assert_kind_of TMail::Mail, mail
+    assert_kind_of Mail::Message, mail
 
     assert_select_email do
       # link to the main ticket
@@ -103,8 +103,8 @@ class MailerTest < ActiveSupport::TestCase
     Mailer.issue_add(issue).deliver
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal 'bulk', mail.header_string('Precedence')
-    assert_equal 'auto-generated', mail.header_string('Auto-Submitted')
+    assert_equal 'bulk', mail[ 'Precedence' ].to_s
+    assert_equal 'auto-generated', mail[ 'Auto-Submitted' ].to_s
   end
 
   def test_plain_text_mail
