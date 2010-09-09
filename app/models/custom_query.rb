@@ -477,12 +477,13 @@ class CustomQuery < ActiveRecord::Base
   def issues(options={})
     order_option = [group_by_sort_order, options[:order]].reject {|s| s.blank?}.join(',')
     order_option = nil if order_option.blank?
-    
-    Issue.find :all, :include => ([:status, :project] + (options[:include] || [])).uniq,
-                     :conditions => CustomQuery.merge_conditions(statement, options[:conditions]),
-                     :order => order_option,
-                     :limit  => options[:limit],
-                     :offset => options[:offset]
+    Issue.joins(:status).joins(:project).where(statement, options[:conditions]).order(order_option).limit(options[:limit]).offset(options[:offset])
+   
+    #Issue.find :all, :include => ([:status, :project] + (options[:include] || [])).uniq,
+    #                 :conditions => CustomQuery.merge_conditions(statement, options[:conditions]),
+    #                 :order => order_option,
+    #                 :limit  => options[:limit],
+    #                 :offset => options[:offset]
   rescue ::ActiveRecord::StatementInvalid => e
     raise StatementInvalid.new(e.message)
   end
@@ -502,8 +503,7 @@ class CustomQuery < ActiveRecord::Base
   # Returns the versions
   # Valid options are :conditions
   def versions(options={})
-    Version.find :all, :include => :project,
-                       :conditions => CustomQuery.merge_conditions(project_statement, options[:conditions])
+    Version.joins(:project).where(project_statement, options[:conditions])
   rescue ::ActiveRecord::StatementInvalid => e
     raise StatementInvalid.new(e.message)
   end
