@@ -176,7 +176,7 @@ module Redmine
         menu_items_for(menu, project) do |node|
           links << render_menu_node(node, project)
         end
-        links.empty? ? nil : content_tag('ul', links.join("\n"))
+        links.empty? ? nil : content_tag('ul', links.join("\n").html_safe)
       end
 
       def render_menu_node(node, project=nil)
@@ -224,7 +224,7 @@ module Redmine
           # Tree nodes support #each so we need to do object detection
           if unattached_children.is_a? Array
             unattached_children.each do |child|
-              child_html << content_tag(:li, render_unattached_menu_item(child, project)) 
+              child_html << content_tag(:li, render_unattached_menu_item(child, project).html_safe) 
             end
           else
             raise MenuError, ":child_menus must be an array of MenuItems"
