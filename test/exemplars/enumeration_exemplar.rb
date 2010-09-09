@@ -1,3 +1,4 @@
+require 'active_record'
 class Enumeration < ActiveRecord::Base
   generator_for :name, :method => :next_name
   generator_for :type => 'TimeEntryActivity'
