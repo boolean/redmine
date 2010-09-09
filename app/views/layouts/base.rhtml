@@ -5,7 +5,7 @@
 <title><%=h html_title %></title>
 <meta name="description" content="<%= Redmine::Info.app_name %>" />
 <meta name="keywords" content="issue,bug,tracker" />
-<%= favicon %>
+<%= favicon.html_safe %>
 <%= stylesheet_link_tag 'application', :media => 'all' %>
 <%= stylesheet_link_tag 'rtl', :media => 'all' if l(:direction) == 'rtl' %>
 <%= javascript_include_tag :defaults %>
@@ -27,7 +27,7 @@
     <div id="account">
         <%= render_menu :account_menu -%>
     </div>
-    <%= content_tag('div', "#{l(:label_logged_as)} #{link_to_user(User.current, :format => :username)}", :id => 'loggedas') if User.current.logged? %>
+    <%= content_tag('div', "#{l(:label_logged_as)} #{link_to_user(User.current, :format => :username)}".html_safe, :id => 'loggedas') if User.current.logged? %>
     <%= render_menu :top_menu -%>
 </div>
       
@@ -57,7 +57,7 @@
     </div>
     
     <div id="content">
-				<%= render_flash_messages %>
+				<%= render_flash_messages.html_safe %>
         <%= yield %>
         <%= call_hook :view_layouts_base_content %>
 				<div style="clear:both;"></div>
