@@ -76,6 +76,7 @@ module Redmine
         Redmine::Hook.add_listener(child)
         super
       end
+      delegate :config, :to => ActionController::Base
 
     end
 
