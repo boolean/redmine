@@ -21,7 +21,7 @@ class QueriesController < ApplicationController
   before_filter :find_optional_project, :only => :new
   
   def new
-    @query = Query.new(params[:query])
+    @query = CustomQuery.new(params[:query])
     @query.project = params[:query_is_for_all] ? nil : @project
     @query.user = User.current
     @query.is_public = false unless User.current.allowed_to?(:manage_public_queries, @project) || User.current.admin?
@@ -61,7 +61,7 @@ class QueriesController < ApplicationController
   
 private
   def find_query
-    @query = Query.find(params[:id])
+    @query = CustomQuery.find(params[:id])
     @project = @query.project
     render_403 unless @query.editable_by?(User.current)
   rescue ActiveRecord::RecordNotFound
