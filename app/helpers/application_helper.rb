@@ -40,7 +40,8 @@ module ApplicationHelper
   # Display a link to remote if user is authorized
   def link_to_remote_if_authorized(name, options = {}, html_options = nil)
     url = options[:url] || {}
-    link_to_remote(name, options, html_options) if authorize_for(url[:controller] || params[:controller], url[:action])
+    html_options.merge!(:remote => true)
+    link_to(name, options, html_options) if authorize_for(url[:controller] || params[:controller], url[:action])
   end
 
   # Displays a link to user's account page if active
@@ -48,6 +49,7 @@ module ApplicationHelper
     if user.is_a?(User)
       name = h(user.name(options[:format]))
       if user.active?
+        #link_to name, user
         link_to name, :controller => 'users', :action => 'show', :id => user
       else
         name
@@ -352,10 +354,12 @@ module ApplicationHelper
     url_param.clear if url_param.has_key?(:set_filter)
 
     links = Setting.per_page_options_array.collect do |n|
-      n == selected ? n : link_to_remote(n, {:update => "content",
+      n == selected ? n : link_to(n, {:update => "content",
                                              :url => params.dup.merge(:per_page => n),
                                              :method => :get},
-                                            {:href => url_for(url_param.merge(:per_page => n))})
+                                            {:href => url_for(url_param.merge(:per_page => n)),
+                                             :remote => true}
+                                 )
     end
     links.size > 1 ? l(:label_display_per_page, links.join(', ')) : nil
   end
@@ -484,7 +488,7 @@ module ApplicationHelper
     while tag = tags.pop
       parsed << "</#{tag}>"
     end
-    parsed
+    parsed.html_safe
   end
   
   def parse_inline_attachments(text, project, obj, attr, only_path, options)
@@ -830,9 +834,9 @@ module ApplicationHelper
   end
   
   def link_to_remote_content_update(text, url_params)
-    link_to_remote(text,
+    link_to(text,
       {:url => url_params, :method => :get, :update => 'content', :complete => 'window.scrollTo(0,0)'},
-      {:href => url_for(:params => url_params)}
+      {:href => url_for(:params => url_params)}, :remote => true
     )
   end
   
