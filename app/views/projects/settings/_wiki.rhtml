@@ -1,4 +1,4 @@
-<% form_for :wiki, @wiki,
+<%= form_for :wiki, @wiki,
                    :url => { :controller => 'wikis', :action => 'edit', :id => @project },
                    :builder => TabularFormBuilder,
                    :lang => current_language,
@@ -18,3 +18,4 @@
 
 <%= submit_tag((@wiki.nil? || @wiki.new_record?) ? l(:button_create) : l(:button_save)) %>
 <% end %>
+

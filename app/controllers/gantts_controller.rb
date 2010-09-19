@@ -11,7 +11,7 @@ class GanttsController < ApplicationController
   helper :sort
   include SortHelper
   include Redmine::Export::PDF
-  
+
   def show
     @gantt = Redmine::Helpers::Gantt.new(params)
     retrieve_query
@@ -30,12 +30,12 @@ class GanttsController < ApplicationController
                               )
       # Versions
       events += @query.versions(:conditions => ["effective_date BETWEEN ? AND ?", @gantt.date_from, @gantt.date_to])
-                                   
+
       @gantt.events = events
     end
-    
+
     basename = (@project ? "#{@project.identifier}-" : '') + 'gantt'
-    
+
     respond_to do |format|
       format.html { render :action => "show", :layout => !request.xhr? }
       format.png  { send_data(@gantt.to_image(@project), :disposition => 'inline', :type => 'image/png', :filename => "#{basename}.png") } if @gantt.respond_to?('to_image')
@@ -48,3 +48,4 @@ class GanttsController < ApplicationController
   end
 
 end
+

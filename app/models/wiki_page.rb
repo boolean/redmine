@@ -44,7 +44,9 @@ class WikiPage < ActiveRecord::Base
   # Wiki pages that are protected by default
   DEFAULT_PROTECTED_PAGES = %w(sidebar)
   
-  def after_initialize
+  after_initialize :set_protected
+
+  def set_protected
     if new_record? && DEFAULT_PROTECTED_PAGES.include?(title.to_s.downcase)
       self.protected = true
     end
@@ -60,7 +62,9 @@ class WikiPage < ActiveRecord::Base
     write_attribute(:title, value)
   end
 
-  def before_save
+  before_save :manage_redirects
+
+  def manage_redirects
     self.title = Wiki.titleize(title)    
     # Manage redirects if the title has changed
     if !@previous_title.blank? && (@previous_title != title) && !new_record?
@@ -76,8 +80,10 @@ class WikiPage < ActiveRecord::Base
       @previous_title = nil
     end
   end
+
+  before_destroy :remove_redirects
   
-  def before_destroy
+  def remove_redirects
     # Remove redirects to this page
     wiki.redirects.find_all_by_redirects_to(title).each(&:destroy)
   end

@@ -20,8 +20,8 @@ class Role < ActiveRecord::Base
   BUILTIN_NON_MEMBER = 1
   BUILTIN_ANONYMOUS  = 2
 
-  named_scope :givable, { :conditions => "builtin = 0", :order => 'position' }
-  named_scope :builtin, lambda { |*args|
+  scope :givable, { :conditions => "builtin = 0", :order => 'position' }
+  scope :builtin, lambda { |*args|
     compare = 'not' if args.first == true
     { :conditions => "#{compare} builtin = 0" }
   }
@@ -40,10 +40,7 @@ class Role < ActiveRecord::Base
   serialize :permissions, Array
   attr_protected :builtin
 
-  validates_presence_of :name
-  validates_uniqueness_of :name
-  validates_length_of :name, :maximum => 30
-  validates_format_of :name, :with => /^[\w\s\'\-]*$/i
+  validates :name, :presence => true, :uniqueness => true, :length => {:maximum => 30}, :format => {:with =>  /^[\w\s\'\-]*$/i }
 
   def permissions
     read_attribute(:permissions) || []

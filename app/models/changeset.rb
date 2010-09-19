@@ -5,12 +5,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -27,27 +27,29 @@ class Changeset < ActiveRecord::Base
                 :description => :long_comments,
                 :datetime => :committed_on,
                 :url => Proc.new {|o| {:controller => 'repositories', :action => 'revision', :id => o.repository.project, :rev => o.revision}}
-                
+
   acts_as_searchable :columns => 'comments',
                      :include => {:repository => :project},
                      :project_key => "#{Repository.table_name}.project_id",
                      :date_column => 'committed_on'
-                     
+
   acts_as_activity_provider :timestamp => "#{table_name}.committed_on",
                             :author_key => :user_id,
                             :find_options => {:include => [:user, {:repository => :project}]}
-  
-  validates_presence_of :repository_id, :revision, :committed_on, :commit_date
-  validates_uniqueness_of :revision, :scope => :repository_id
-  validates_uniqueness_of :scmid, :scope => :repository_id, :allow_nil => true
-  
-  named_scope :visible, lambda {|*args| { :include => {:repository => :project},
+
+  validates :repository_id, :presence => true
+  validates :revision, :presence => true, :uniqueness => {:scope => :repository_id}
+  validates :commited_on, :presence => true
+  validates :commit_date, :presence => true
+  validates :scmid, :uniqueness => {:scope => :repository_id, :allow_nil => true}
+
+  scope :visible, lambda {|*args| { :include => {:repository => :project},
                                           :conditions => Project.allowed_to_condition(args.first || User.current, :view_changesets) } }
-                                          
+
   def revision=(r)
     write_attribute :revision, (r.nil? ? nil : r.to_s)
   end
-  
+
   def comments=(comment)
     write_attribute(:comments, Changeset.normalize_comments(comment))
   end
@@ -56,7 +58,7 @@ class Changeset < ActiveRecord::Base
     self.commit_date = date
     super
   end
-  
+
   def committer=(arg)
     write_attribute(:committer, self.class.to_utf8(arg.to_s))
   end
@@ -64,38 +66,37 @@ class Changeset < ActiveRecord::Base
   def project
     repository.project
   end
-  
+
   def author
     user || committer.to_s.split('<').first
   end
-  
-  def before_create
+
+  before_create :set_user
+  def set_user
     self.user = repository.find_committer_user(committer)
   end
-  
-  def after_create
-    scan_comment_for_issue_ids
-  end
-  
+
+  after_create :scan_comment_for_issue_ids
+
   def scan_comment_for_issue_ids
     return if comments.blank?
     # keywords used to reference issues
     ref_keywords = Setting.commit_ref_keywords.downcase.split(",").collect(&:strip)
     # keywords used to fix issues
     fix_keywords = Setting.commit_fix_keywords.downcase.split(",").collect(&:strip)
-    
+
     kw_regexp = (ref_keywords + fix_keywords).collect{|kw| Regexp.escape(kw)}.join("|")
     return if kw_regexp.blank?
-    
+
     referenced_issues = []
-    
+
     if ref_keywords.delete('*')
       # find any issue ID in the comments
       target_issue_ids = []
       comments.scan(%r{([\s\(\[,-]|^)#(\d+)(?=[[:punct:]]|\s|<|$)}).each { |m| target_issue_ids << m[1] }
       referenced_issues += find_referenced_issues_by_id(target_issue_ids)
     end
-    
+
     comments.scan(Regexp.new("(#{kw_regexp})[\s:]+(([\s,;&]*#?\\d+)+)", Regexp::IGNORECASE)).each do |match|
       action = match[0]
       target_issue_ids = match[1].scan(/\d+/)
@@ -124,19 +125,19 @@ class Changeset < ActiveRecord::Base
       end
       referenced_issues += target_issues
     end
-    
+
     referenced_issues.uniq!
     self.issues = referenced_issues unless referenced_issues.empty?
   end
-  
+
   def short_comments
     @short_comments || split_comments.first
   end
-  
+
   def long_comments
     @long_comments || split_comments.last
   end
-  
+
   # Returns the previous changeset
   def previous
     @previous ||= Changeset.find(:first, :conditions => ['id < ? AND repository_id = ?', self.id, self.repository_id], :order => 'id DESC')
@@ -146,7 +147,7 @@ class Changeset < ActiveRecord::Base
   def next
     @next ||= Changeset.find(:first, :conditions => ['id > ? AND repository_id = ?', self.id, self.repository_id], :order => 'id ASC')
   end
-  
+
   # Strips and reencodes a commit log before insertion into the database
   def self.normalize_comments(str)
     to_utf8(str.to_s.strip)
@@ -160,7 +161,7 @@ class Changeset < ActiveRecord::Base
                   :from_path => change[:from_path],
                   :from_revision => change[:from_revision])
   end
-  
+
   private
 
   # Finds issues that can be referenced by the commit message
@@ -171,7 +172,7 @@ class Changeset < ActiveRecord::Base
       project == issue.project || project.is_ancestor_of?(issue.project) || project.is_descendant_of?(issue.project)
     }
   end
-  
+
   def split_comments
     comments =~ /\A(.+?)\r?\n(.*)$/m
     @short_comments = $1 || comments
@@ -198,3 +199,4 @@ class Changeset < ActiveRecord::Base
     end
   end
 end
+

@@ -19,19 +19,17 @@ class CustomField < ActiveRecord::Base
   has_many :custom_values, :dependent => :delete_all
   acts_as_list :scope => 'type = \'#{self.class}\''
   serialize :possible_values
-  
-  validates_presence_of :name, :field_format
-  validates_uniqueness_of :name, :scope => :type
-  validates_length_of :name, :maximum => 30
-  validates_format_of :name, :with => /^[\w\s\.\'\-]*$/i
-  validates_inclusion_of :field_format, :in => Redmine::CustomFieldFormat.available_formats
+ 
+  validates :name, :presence => true, :uniqueness => {:scope => :type}, :length => {:maximum => 30}, :format => {:with => /^[\w\s\.\'\-]*$/i }
+  validates :field_format, :presence => true, :inclusion => {:in => Redmine::CustomFieldFormat.available_formats}
 
   def initialize(attributes = nil)
     super
     self.possible_values ||= []
   end
   
-  def before_validation
+  before_validation :field_searchable
+  def field_searchable
     # make sure these fields are not searchable
     self.searchable = false if %w(int float date bool).include?(field_format)
     true

@@ -40,7 +40,9 @@ class TimeEntry < ActiveRecord::Base
   validates_numericality_of :hours, :allow_nil => true, :message => :invalid
   validates_length_of :comments, :maximum => 255, :allow_nil => true
 
-  def after_initialize
+  after_initialize :set_activity
+
+  def set_activity
     if new_record? && self.activity.nil?
       if default_activity = TimeEntryActivity.default
         self.activity_id = default_activity.id
@@ -49,7 +51,8 @@ class TimeEntry < ActiveRecord::Base
     end
   end
   
-  def before_validation
+  before_validation :asign_project
+  def asign_project
     self.project = issue.project if issue && project.nil?
   end
   

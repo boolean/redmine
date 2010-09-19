@@ -22,8 +22,9 @@ class Member < ActiveRecord::Base
   has_many :roles, :through => :member_roles
   belongs_to :project
 
-  validates_presence_of :principal, :project
-  validates_uniqueness_of :user_id, :scope => :project_id
+  validates :principal, :presence => true
+  validates :project, :presence => true
+  validates :user_id, :uniqueness => {:scope => :project_id}
 
   after_destroy :unwatch_from_permission_change
   
@@ -64,8 +65,9 @@ class Member < ActiveRecord::Base
       self.user == user
     end
   end
-  
-  def before_destroy
+ 
+  before_destroy :clean_issue_categories
+  def clean_issue_categories
     if user
       # remove category based auto assignments for this member
       IssueCategory.update_all "assigned_to_id = NULL", ["project_id = ? AND assigned_to_id = ?", project.id, user.id]

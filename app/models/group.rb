@@ -21,9 +21,7 @@ class Group < Principal
   
   acts_as_customizable
   
-  validates_presence_of :lastname
-  validates_uniqueness_of :lastname, :case_sensitive => false
-  validates_length_of :lastname, :maximum => 30
+  validates :lastname, :presence => true, :uniqueness => {:case_sensitive => false}, :length => {:maximum => 30}
     
   def to_s
     lastname.to_s

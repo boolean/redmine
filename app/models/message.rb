@@ -37,8 +37,10 @@ class Message < ActiveRecord::Base
   acts_as_watchable
     
   attr_protected :locked, :sticky
-  validates_presence_of :board, :subject, :content
-  validates_length_of :subject, :maximum => 255
+
+  validates :board, :presence => true
+  validates :subject, :presence => true, :length => {:maximum => 255}
+  validates :content, :presence => true
   
   after_create :add_author_as_watcher
   
@@ -51,14 +53,16 @@ class Message < ActiveRecord::Base
     errors.add_to_base 'Topic is locked' if root.locked? && self != root
   end
   
-  def after_create
+  after_create :update_last_reply
+  def update_last_reply
     if parent
       parent.reload.update_attribute(:last_reply_id, self.id)
     end
     board.reset_counters!
   end
-  
-  def after_update
+ 
+  after_update :reset_board_counters
+  def reset_board_counters
     if board_id_changed?
       Message.update_all("board_id = #{board_id}", ["id = ? OR parent_id = ?", root.id, root.id])
       Board.reset_counters!(board_id_was)
@@ -66,7 +70,8 @@ class Message < ActiveRecord::Base
     end
   end
   
-  def after_destroy
+  after_destroy :reset_counters
+  def reset_counters
     board.reset_counters!
   end
   

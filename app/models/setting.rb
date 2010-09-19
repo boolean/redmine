@@ -74,14 +74,13 @@ class Setting < ActiveRecord::Base
                   TIS-620)
   
   cattr_accessor :available_settings
-  @@available_settings = YAML::load(File.open("#{RAILS_ROOT}/config/settings.yml"))
+  @@available_settings = YAML::load(File.open("#{Rails.root.to_s}/config/settings.yml"))
   Redmine::Plugin.all.each do |plugin|
     next unless plugin.settings
     @@available_settings["plugin_#{plugin.id}"] = {'default' => plugin.settings[:default], 'serialized' => true}    
   end
   
-  validates_uniqueness_of :name
-  validates_inclusion_of :name, :in => @@available_settings.keys
+  validates :name, :uniqueness => true, :inclusion => {:in => @@available_settings.keys }
   validates_numericality_of :value, :only_integer => true, :if => Proc.new { |setting| @@available_settings[setting.name]['format'] == 'int' }  
 
   # Hash used to cache setting values

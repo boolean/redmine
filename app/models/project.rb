@@ -63,12 +63,12 @@ class Project < ActiveRecord::Base
 
   attr_protected :status, :enabled_module_names
   
-  validates_presence_of :name, :identifier
-  validates_uniqueness_of :name, :identifier
+  validates :name, :presence => true, :uniqueness => true, :length => {:maximum => 30}
+  validates :identifier, :presence => true, :uniqueness => true, :length => {:in => 1..20}
+  validates :homepage, :length => {:maximum => 255}
+
+
   validates_associated :repository, :wiki
-  validates_length_of :name, :maximum => 30
-  validates_length_of :homepage, :maximum => 255
-  validates_length_of :identifier, :in => 1..20
   # donwcase letters, digits, dashes but not digits only
   validates_format_of :identifier, :with => /^(?!\d+$)[a-z0-9\-]*$/, :if => Proc.new { |p| p.identifier_changed? }
   # reserved words
@@ -76,10 +76,10 @@ class Project < ActiveRecord::Base
 
   before_destroy :delete_all_members, :destroy_children
 
-  named_scope :has_module, lambda { |mod| { :conditions => ["#{Project.table_name}.id IN (SELECT em.project_id FROM #{EnabledModule.table_name} em WHERE em.name=?)", mod.to_s] } }
-  named_scope :active, { :conditions => "#{Project.table_name}.status = #{STATUS_ACTIVE}"}
-  named_scope :all_public, { :conditions => { :is_public => true } }
-  named_scope :visible, lambda { { :conditions => Project.visible_by(User.current) } }
+  scope :has_module, lambda { |mod| { :conditions => ["#{Project.table_name}.id IN (SELECT em.project_id FROM #{EnabledModule.table_name} em WHERE em.name=?)", mod.to_s] } }
+  scope :active, { :conditions => "#{Project.table_name}.status = #{STATUS_ACTIVE}"}
+  scope :all_public, { :conditions => { :is_public => true } }
+  scope :visible, lambda { { :conditions => Project.visible_by(User.current) } }
   
   def identifier=(identifier)
     super unless identifier_frozen?

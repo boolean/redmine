@@ -22,7 +22,6 @@ class ApplicationController < ActionController::Base
   include Redmine::I18n
 
   layout 'base'
-  exempt_from_layout 'builder'
   
   # Remove broken cookie after upgrade from 0.8.x (#4292)
   # See https://rails.lighthouseapp.com/projects/8994/tickets/3360
@@ -37,7 +36,6 @@ class ApplicationController < ActionController::Base
   end
   
   before_filter :user_setup, :check_if_login_required, :set_localization
-  filter_parameter_logging :password
   protect_from_forgery
   
   rescue_from ActionController::InvalidAuthenticityToken, :with => :invalid_authenticity_token

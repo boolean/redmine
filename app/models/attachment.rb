@@ -21,9 +21,10 @@ class Attachment < ActiveRecord::Base
   belongs_to :container, :polymorphic => true
   belongs_to :author, :class_name => "User", :foreign_key => "author_id"
   
-  validates_presence_of :container, :filename, :author
-  validates_length_of :filename, :maximum => 255
-  validates_length_of :disk_filename, :maximum => 255
+  validates :container, :presence => true
+  validates :author, :presence => true
+  validates :filename, :presence => true, :length => {:maximum => 255}
+  validates :disk_filename, :length => {:maximum => 255}
 
   acts_as_event :title => :filename,
                 :url => Proc.new {|o| {:controller => 'attachments', :action => 'download', :id => o.id, :filename => o.filename}}
@@ -43,7 +44,7 @@ class Attachment < ActiveRecord::Base
                                                         "LEFT JOIN #{Project.table_name} ON #{Document.table_name}.project_id = #{Project.table_name}.id"}
 
   cattr_accessor :storage_path
-  @@storage_path = "#{RAILS_ROOT}/files"
+  @@storage_path = "#{Rails.root.to_s}/files"
   
   def validate
     if self.filesize > Setting.attachment_max_size.to_i.kilobytes
@@ -70,9 +71,10 @@ class Attachment < ActiveRecord::Base
     nil
   end
 
+  before_save :copy_temporary_files
   # Copies the temporary file to its final location
   # and computes its MD5 hash
-  def before_save
+  def copy_temporary_files
     if @temp_file && (@temp_file.size > 0)
       logger.debug("saving '#{self.diskfile}'")
       md5 = Digest::MD5.new
@@ -91,8 +93,9 @@ class Attachment < ActiveRecord::Base
     end
   end
 
+  after_destroy :delete_files_from_disk
   # Deletes file on the disk
-  def after_destroy
+  def delete_files_from_disk
     File.delete(diskfile) if !filename.blank? && File.exist?(diskfile)
   end
 

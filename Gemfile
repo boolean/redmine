@@ -1,4 +1,4 @@
-source 'http://rubygems.org'
+source 'http://gemcutter.org'
 
 gem 'rails', '3.0.0'
 
@@ -30,9 +30,10 @@ gem 'mysql2'
 # end
 #
 group :test do
-  gem 'shoulda', :git => "git://github.com/thoughtbot/shoulda.git"
+  gem 'shoulda'
   gem 'edavis10-object_daddy', :require => "object_daddy"
   gem 'mocha'
 end
 
 gem 'rubytree', :require => 'tree'
+

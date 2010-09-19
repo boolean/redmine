@@ -36,11 +36,11 @@ class IssueRelation < ActiveRecord::Base
             TYPE_FOLLOWS =>     { :name => :label_follows, :sym_name => :label_precedes, :order => 7, :sym => TYPE_PRECEDES, :reverse => TYPE_PRECEDES }
           }.freeze
   
-  validates_presence_of :issue_from, :issue_to, :relation_type
-  validates_inclusion_of :relation_type, :in => TYPES.keys
-  validates_numericality_of :delay, :allow_nil => true
-  validates_uniqueness_of :issue_to_id, :scope => :issue_from_id
-  
+  validates :issue_from, :presence => true
+  validates :issue_to, :presence => true, :uniqueness => {:scope => :issue_from_id}
+  validates :relation_type, :presence => true, :inclusion => {:in => TYPES.keys}
+  validates :delay, :numericality => true
+
   attr_protected :issue_from_id, :issue_to_id
   
   def validate
@@ -71,7 +71,8 @@ class IssueRelation < ActiveRecord::Base
     TYPES[relation_type] ? TYPES[relation_type][(self.issue_from_id == issue.id) ? :name : :sym_name] : :unknow
   end
   
-  def before_save
+  before_save :remove_delay
+  def remove_delay
     reverse_if_needed
     
     if TYPE_PRECEDES == relation_type

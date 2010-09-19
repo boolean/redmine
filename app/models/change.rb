@@ -18,7 +18,10 @@
 class Change < ActiveRecord::Base
   belongs_to :changeset
   
-  validates_presence_of :changeset_id, :action, :path
+  validates :changeset_id, :presence => true
+  validates :action, :presence => true
+  validates :path, :presence => true
+
   before_save :init_path
   
   def relative_path

@@ -1,26 +1,26 @@
 RedmineFork::Application.routes.draw do
   # Add your own custom routes here.
   # The priority is based upon order of creation: first created -> highest priority.
-  
+
   # Here's a sample route:
   # map.connect 'products/:id', :controller => 'catalog', :action => 'view'
   # Keep in mind you can assign values other than :controller and :action
 
   match '', :to => "welcome#index", :as => "home"
-  
+
   match 'login', :to => "account#login", :as => "signin"
   match 'logout', :to => "account#logout", :as => "signout"
-  
+
   match 'roles/workflow/:id/:role_id/:tracker_id', :to => "roles#workflow"
   match 'help/:ctrl/:page', :to => "help#index"
-  
+
   match 'time_entries/:id/edit', :to => "timelog#edit"
   match 'projects/:project_id/time_entries/new', :to => "timelog#edit"
   match 'projects/:project_id/issues/:issue_id/time_entries/new', :to => "timelog#edit"
-  
+
   controller :timelog do
     match 'projects/:project_id/time_entries', :action => 'details'
-    
+
     match '(issues/:issue_id/)time_entries', :action => "details", :via => :get
     match 'projects/:project_id(/issues/:issue_id)/time_entries', :action => "details", :via => :get
     match 'projects/:project_id/time_entries/report', :action => 'report'
@@ -29,7 +29,7 @@ RedmineFork::Application.routes.draw do
     match 'issues/:issue_id/time_entries/new', :action => "edit", :via => :get
     match 'time_entries/:id/destroy', :action => 'destroy', :via => :post
   end
-  
+
   match 'projects/:id/wiki' => "wikis#edit", :via => :post
   match 'projects/:id/wiki/destroy' => "wikis#destroy", :via => [:get, :post]
   controller :wiki, :via => :get do
@@ -40,10 +40,10 @@ RedmineFork::Application.routes.draw do
     match 'projects/:id/wiki/:page/history', :action => 'history'
     match 'projects/:id/wiki/:page/diff/:version/vs/:version_from', :action => 'diff'
     match 'projects/:id/wiki/:page/annotate/:version', :action => 'annotate'
-    
+
     match 'projects/:id/wiki/:page/:action', :action => /edit|rename|destroy|preview|protect/, :via => :post
   end
-  
+
   controller :messages, :via => :get do
     match 'boards/:board_id/topics/new', :action => 'new'
     match 'boards/:board_id/topics/:id', :action => 'show'
@@ -54,7 +54,7 @@ RedmineFork::Application.routes.draw do
     match 'boards/:board_id/topics/:id/replies', :action => 'reply'
     match 'boards/:board_id/topics/:id/:action', :constraints => {:action => /edit|destroy/}
   end
-  
+
   controller :boards, :via => :get do
     match 'projects/:project_id/boards', :action => 'index'
     match 'projects/:project_id/boards/new', :action => 'new'
@@ -65,7 +65,7 @@ RedmineFork::Application.routes.draw do
     match 'projects/:project_id/boards', :action => 'new'
     match 'projects/:project_id/boards/:id/:action', :action => /edit|destroy/
   end
-  
+
   controller :documents, :via => :get do
       match 'projects/:project_id/documents', :action => 'index'
       match 'projects/:project_id/documents/new', :action => 'new'
@@ -81,7 +81,7 @@ RedmineFork::Application.routes.draw do
 
   # Misc issue routes. TODO: move into resources
   match '/issues/auto_complete' => "auto_completes#issues", :as => :auto_complete_issues
-  match '/issues/preview/:id' => 'previews#issue', :as => :preview_issue # TODO: would look nicer as /issues/:id/preview
+  match '/issues/preview/:project_id' => 'previews#issue', :as => :preview_issue # TODO: would look nicer as /issues/:id/preview
   match '/issues/context_menu' => 'context_menus#issues', :as => :issues_context_menu
   match '/issues/changes' => 'journals#index', :as => :issue_changes
   match 'issues/bulk_edit' => 'issues#bulk_edit', :via => :get, :as => :bulk_edit_issue
@@ -102,7 +102,7 @@ RedmineFork::Application.routes.draw do
   # Following two routes conflict with the resources because #index allows POST
   match '/issues' => 'issues#index', :via => :post
   match '/issues/create' => 'issues#index', :via => :post
-  
+
   resources :issues do
     member do
       post 'edit'
@@ -119,7 +119,7 @@ RedmineFork::Application.routes.draw do
     match 'issues/:issue_id/relations/:id', :action => 'new'
     match 'issues/:issue_id/relations/:id/destroy', :action => 'destroy'
   end
-  
+
   controller :news, :via => :get do
     match 'news', :action => 'index'
     match 'projects/:project_id/news', :action => 'index'
@@ -134,9 +134,9 @@ RedmineFork::Application.routes.draw do
     match 'news/:id/edit', :action => 'edit'
     match 'news/:id/destroy', :action => 'destroy'
   end
-  
+
   match 'projects/:id/members/new', :to => "members#new"
-  
+
   controller :users, :via => :get do
       match 'users', :action => 'index'
       match 'users/:id', :action => 'show', :id => /\d+/
@@ -151,7 +151,7 @@ RedmineFork::Application.routes.draw do
     match 'users/:id/memberships/:membership_id', :action => 'edit_membership'
     match 'users/:id/memberships/:membership_id/destroy', :action => 'destroy_membership'
   end
-  
+
 =begin
   map.with_options :controller => 'projects' do |projects|
     projects.with_options :conditions => {:method => :get} do |project_views|
@@ -173,7 +173,7 @@ RedmineFork::Application.routes.draw do
       activity.connect 'activity', :id => nil
       activity.connect 'activity.:format', :id => nil
     end
-    
+
     projects.with_options :conditions => {:method => :post} do |project_actions|
       project_actions.connect 'projects/new', :action => 'add'
       project_actions.connect 'projects', :action => 'add'
@@ -219,7 +219,7 @@ RedmineFork::Application.routes.draw do
     match 'projects/:id/files/new', :action => 'add_file'
     match 'projects/:id/activities/save', :action => 'save_activities'
   end
-  
+
   match 'projects/:id.:format' => 'projects#edit', :via => :put, :constraints => { :format => /xml/ }
 
   controller :projects, :via => :delete do
@@ -232,9 +232,9 @@ RedmineFork::Application.routes.draw do
     match 'projects/:project_id/roadmap', :action => 'index'
     match 'projects/:project_id/versions/close_completed', :action => 'close_completed', :via => :post
   end
-  
+
   match "projects/:project_id/issue_categories/new" => "issue_categories#new"
-  
+
   controller :repositories, :via => :get do
     match 'projects/:id/repository', :action => 'show'
     match 'projects/:id/repository/edit', :action => 'edit'
@@ -252,13 +252,13 @@ RedmineFork::Application.routes.draw do
     match 'projects/:id/repository/:action/*path'
   end
   match 'projects/:id/repository/:action', :controller => "repositories", :via => :post
-  
+
   match "/attachments/:id", :to => "attachments#show", :constraints => {:id => /\d+/ }
   match 'attachments/:id/:filename', :to => "attachments#show", :constraints => {:id => /\d+/, :filename => /.*/}
   match 'attachments/download/:id/:filename', :to => "attachments#download", :constraints => {:id => /\d+/, :filename => /.*/}
-   
+
   resources :groups
-  
+
   #left old routes at the bottom for backwards compat
   #map.connect 'projects/:project_id/issues/:action', :controller => 'issues'
   match 'projects/:project_id/issues/:action', :controller => :issues
@@ -277,15 +277,16 @@ RedmineFork::Application.routes.draw do
     match 'repositories/annotate/:id/*path', :action => 'annotate'
     match 'repositories/revision/:id/:rev', :action => 'revision'
   end
-  
+
   controller :sys do
     match 'sys/projects.:format', :action => 'projects', :via => :get
     match 'sys/projects/:id/repository.:format', :action => 'create_project_repository', :via => :post
   end
- 
+
   # Install the default route as the lowest priority.
   match ':controller(/:action(/:id))'
   match 'robots.txt', :to => "welcome#robots"
   # Used for OpenID
   root :to => "account#login"
 end
+

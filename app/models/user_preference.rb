@@ -25,8 +25,10 @@ class UserPreference < ActiveRecord::Base
     super
     self.others ||= {}
   end
+
+  before_save :clean_others
   
-  def before_save
+  def clean_others
     self.others ||= {}
   end
   

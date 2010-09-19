@@ -1,6 +1,6 @@
 <h2><%= l(:label_calendar) %></h2>
 
-<% form_tag(calendar_path, :method => :put, :id => 'query_form') do %>
+<%= form_tag(calendar_path, :method => :put, :id => 'query_form') do %>
   <%= hidden_field_tag('project_id', @project.to_param) if @project%>
 <fieldset id="filters" class="collapsible">
   <legend onclick="toggleFieldset(this);"><%= l(:label_filter_plural) %></legend>
@@ -19,14 +19,14 @@
 <%= label_tag('year', l(:label_year)) %>
 <%= select_year(@year, :prefix => "year", :discard_type => true) %>
 
-<%= link_to l(:button_apply), 
+<%= link_to l(:button_apply),
                    { :url => { :set_filter => (@query.new_record? ? 1 : nil) },
                      :update => "content",
                      :with => "Form.serialize('query_form')"
                    }, :class => 'icon icon-checked', :remote => true %>
-                   
+
 <%= link_to l(:button_clear),
-                   { :url => { :set_filter => (@query.new_record? ? 1 : nil) }, 
+                   { :url => { :set_filter => (@query.new_record? ? 1 : nil) },
                      :update => "content",
                    }, :remote => true, :class => 'icon icon-reload' if @query.new_record? %>
 </p>
@@ -48,3 +48,4 @@
 <% end %>
 
 <% html_title(l(:label_calendar)) -%>
+

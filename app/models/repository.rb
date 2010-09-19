@@ -25,8 +25,11 @@ class Repository < ActiveRecord::Base
   before_destroy :clear_changesets
   
   # Checks if the SCM is enabled when creating a repository
-  validate_on_create { |r| r.errors.add(:type, :invalid) unless Setting.enabled_scm.include?(r.class.name.demodulize) }
-  
+  validate :validate_scm, :on => :create  
+  def validate_scm
+    self.errors.add(:type, :invalid) unless Setting.enabled_scm.include?(self.class.name.demodulize)
+  end
+
   # Removes leading and trailing whitespace
   def url=(arg)
     write_attribute(:url, arg ? arg.to_s.strip : nil)
@@ -197,9 +200,11 @@ class Repository < ActiveRecord::Base
     nil
   end
   
+  before_save :strip_url
+
   private
   
-  def before_save
+  def strip_url
     # Strips url and root_url
     url.strip!
     root_url.strip!

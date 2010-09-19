@@ -25,15 +25,17 @@ class Document < ActiveRecord::Base
                 :author => Proc.new {|o| (a = o.attachments.find(:first, :order => "#{Attachment.table_name}.created_on ASC")) ? a.author : nil },
                 :url => Proc.new {|o| {:controller => 'documents', :action => 'show', :id => o.id}}
   acts_as_activity_provider :find_options => {:include => :project}
-  
-  validates_presence_of :project, :title, :category
-  validates_length_of :title, :maximum => 60
+ 
+  validates :project, :presence => true
+  validates :title, :presence => true, :length => {:maximum => 60}
+  validates :category, :presence => true
   
   def visible?(user=User.current)
     !user.nil? && user.allowed_to?(:view_documents, project)
   end
-  
-  def after_initialize
+ 
+  after_initialize :set_default_category
+  def set_default_category
     if new_record?
       self.category ||= DocumentCategory.default
     end

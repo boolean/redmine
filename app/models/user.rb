@@ -43,7 +43,7 @@ class User < Principal
   belongs_to :auth_source
   
   # Active non-anonymous users scope
-  named_scope :active, :conditions => "#{User.table_name}.status = #{STATUS_ACTIVE}"
+  scope :active, :conditions => "#{User.table_name}.status = #{STATUS_ACTIVE}"
   
   acts_as_customizable
   
@@ -64,12 +64,14 @@ class User < Principal
   validates_length_of :mail, :maximum => 60, :allow_nil => true
   validates_confirmation_of :password, :allow_nil => true
 
-  def before_create
+  before_create :set_mail_notification
+  def set_mail_notification
     self.mail_notification = false
     true
   end
   
-  def before_save
+  before_save :store_hashed_password
+  def store_hashed_password
     # update hashed_password if password was set
     self.hashed_password = User.hash_password(self.password) if self.password && self.auth_source_id.blank?
   end

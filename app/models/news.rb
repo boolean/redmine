@@ -19,10 +19,10 @@ class News < ActiveRecord::Base
   belongs_to :project
   belongs_to :author, :class_name => 'User', :foreign_key => 'author_id'
   has_many :comments, :as => :commented, :dependent => :delete_all, :order => "created_on"
-  
-  validates_presence_of :title, :description
-  validates_length_of :title, :maximum => 60
-  validates_length_of :summary, :maximum => 255
+ 
+  validates :title, :presence => true, :length => {:maximum => 60}
+  validates :description, :presence => true
+  validates :summary, :length => {:maximum => 255}
 
   acts_as_searchable :columns => ['title', 'summary', "#{table_name}.description"], :include => :project
   acts_as_event :url => Proc.new {|o| {:controller => 'news', :action => 'show', :id => o.id}}

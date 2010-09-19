@@ -6,7 +6,7 @@
 
 <h2><%= l(:label_spent_time) %></h2>
 
-<% form_tag( :url => {}, :html => {:method => :get, :id => 'query_form'}, :method => :get, :update => 'content', :remote => true ) do %>
+<%= form_tag( :url => {}, :html => {:method => :get, :id => 'query_form'}, :method => :get, :update => 'content', :remote => true ) do %>
 <%# TOOD: remove the project_id and issue_id hidden fields, that information is
 already in the URI %>
 <%= hidden_field_tag('project_id', params[:project_id]) if @project %>
@@ -15,7 +15,7 @@ already in the URI %>
 <% end %>
 
 <div class="total-hours">
-<p><%= l(:label_total) %>: <%= html_hours(l_hours(@total_hours)) %></p>
+<p><%= l(:label_total) %>: <%= html_hours(l_hours(@total_hours)).html_safe %></p>
 </div>
 
 <% unless @entries.empty? %>
@@ -33,3 +33,4 @@ already in the URI %>
 <% content_for :header_tags do %>
     <%= auto_discovery_link_tag(:atom, {:issue_id => @issue, :format => 'atom', :key => User.current.rss_key}, :title => l(:label_spent_time)) %>
 <% end %>
+

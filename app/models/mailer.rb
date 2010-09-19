@@ -21,7 +21,7 @@ class Mailer < ActionMailer::Base
   helper :issues
   helper :custom_fields
 
-  include ActionController::UrlWriter
+  include Rails.application.routes.url_helpers
   include Redmine::I18n
 
   def self.default_url_options
@@ -29,7 +29,7 @@ class Mailer < ActionMailer::Base
     h = h.to_s.gsub(%r{\/.*$}, '') unless Redmine::Utils.relative_url_root.blank?
     { :host => h, :protocol => Setting.protocol }
   end
-  
+
   # Builds a tmail object used to email recipients of the added issue.
   #
   # Example:
@@ -41,12 +41,11 @@ class Mailer < ActionMailer::Base
                     'Issue-Author' => issue.author.login
     redmine_headers 'Issue-Assignee' => issue.assigned_to.login if issue.assigned_to
     message_id issue
-    recipients issue.recipients
-    cc(issue.watcher_recipients - @recipients)
-    subject "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}] (#{issue.status.name}) #{issue.subject}"
-    body :issue => issue,
-         :issue_url => url_for(:controller => 'issues', :action => 'show', :id => issue)
-    render_multipart('issue_add', body)
+
+    @issue = issue
+    @issue_url = url_for(:controller => 'issues', :action => 'show', :id => issue)
+
+    mail(:to => issue.recipients, :cc => (issue.watcher_recipients - issue.recipients), :subject => "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}] (#{issue.status.name}) #{issue.subject}")
   end
 
   # Builds a tmail object used to email recipients of the edited issue.
@@ -63,28 +62,22 @@ class Mailer < ActionMailer::Base
     message_id journal
     references issue
     @author = journal.user
-    recipients issue.recipients
-    # Watchers in cc
-    cc(issue.watcher_recipients - @recipients)
     s = "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}] "
     s << "(#{issue.status.name}) " if journal.new_value_for('status_id')
     s << issue.subject
-    subject s
-    body :issue => issue,
-         :journal => journal,
-         :issue_url => url_for(:controller => 'issues', :action => 'show', :id => issue)
+    @issue = issue
+    @journal = journal
+    @issue_url = url_for(:controller => 'issues', :action => 'show', :id => issue)
 
-    render_multipart('issue_edit', body)
+    mail(:to => issue.recipients, :cc => issue.watcher_recipients - @recipients, :subject => s)
   end
 
   def reminder(user, issues, days)
     set_language_if_valid user.language
-    recipients user.mail
-    subject l(:mail_subject_reminder, :count => issues.size, :days => days)
-    body :issues => issues,
-         :days => days,
-         :issues_url => url_for(:controller => 'issues', :action => 'index', :set_filter => 1, :assigned_to_id => user.id, :sort_key => 'due_date', :sort_order => 'asc')
-    render_multipart('reminder', body)
+    @issues = issues
+    @days = days
+    @issues_url = url_for(:controller => 'issues', :action => 'index', :set_filter => 1, :assigned_to_id => user.id, :sort_key => 'due_date', :sort_order => 'asc')
+    mail(:to => user.mail, :subject => l(:mail_subject_reminder, :count => issues.size, :days => days))
   end
 
   # Builds a tmail object used to email users belonging to the added document's project.
@@ -94,11 +87,9 @@ class Mailer < ActionMailer::Base
   #   Mailer.deliver_document_added(document) => sends an email to the document's project recipients
   def document_added(document)
     redmine_headers 'Project' => document.project.identifier
-    recipients document.recipients
-    subject "[#{document.project.name}] #{l(:label_document_new)}: #{document.title}"
-    body :document => document,
-         :document_url => url_for(:controller => 'documents', :action => 'show', :id => document)
-    render_multipart('document_added', body)
+    @document = document
+    @document_url = url_for(:controller => 'documents', :action => 'show', :id => document)
+    mail(:to => document.recipients, :subject => "[#{document.project.name}] #{l(:label_document_new)}: #{document.title}")
   end
 
   # Builds a tmail object used to email recipients of a project when an attachements are added.
@@ -110,28 +101,28 @@ class Mailer < ActionMailer::Base
     container = attachments.first.container
     added_to = ''
     added_to_url = ''
+    recipients = ''
     case container.class.name
     when 'Project'
       added_to_url = url_for(:controller => 'projects', :action => 'list_files', :id => container)
       added_to = "#{l(:label_project)}: #{container}"
-      recipients container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.mail}
+      recipients = container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.mail}
     when 'Version'
       added_to_url = url_for(:controller => 'projects', :action => 'list_files', :id => container.project_id)
       added_to = "#{l(:label_version)}: #{container.name}"
-      recipients container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.mail}
+      recipients = container.project.notified_users.select {|user| user.allowed_to?(:view_files, container.project)}.collect  {|u| u.mail}
     when 'Document'
       added_to_url = url_for(:controller => 'documents', :action => 'show', :id => container.id)
       added_to = "#{l(:label_document)}: #{container.title}"
-      recipients container.recipients
+      recipients = container.recipients
     end
     redmine_headers 'Project' => container.project.identifier
-    subject "[#{container.project.name}] #{l(:label_attachment_new)}"
-    body :attachments => attachments,
-         :added_to => added_to,
-         :added_to_url => added_to_url
-    render_multipart('attachments_added', body)
+    @attachments = attachments
+    @added_to = added_to
+    @added_to_url = added_to_url
+    mail(:to => recipients, :subject => "[#{container.project.name}] #{l(:label_attachment_new)}")
   end
-  
+
   # Builds a tmail object used to email recipients of a news' project when a news item is added.
   #
   # Example:
@@ -140,16 +131,14 @@ class Mailer < ActionMailer::Base
   def news_added(news)
     redmine_headers 'Project' => news.project.identifier
     message_id news
-    recipients news.recipients
-    subject "[#{news.project.name}] #{l(:label_news)}: #{news.title}"
-    body :news => news,
-         :news_url => url_for(:controller => 'news', :action => 'show', :id => news)
-    render_multipart('news_added', body)
+    @news = news
+    @news_url = url_for(:controller => 'news', :action => 'show', :id => news)
+    mail(:to => news.recipients, :subject => "[#{news.project.name}] #{l(:label_news)}: #{news.title}")
   end
 
-  # Builds a tmail object used to email the recipients of the specified message that was posted. 
+  # Builds a tmail object used to email the recipients of the specified message that was posted.
   #
-  # Example:
+  # wsExample:
   #   message_posted(message) => tmail object
   #   Mailer.deliver_message_posted(message) => sends an email to the recipients
   def message_posted(message)
@@ -157,15 +146,12 @@ class Mailer < ActionMailer::Base
                     'Topic-Id' => (message.parent_id || message.id)
     message_id message
     references message.parent unless message.parent.nil?
-    recipients(message.recipients)
-    cc((message.root.watcher_recipients + message.board.watcher_recipients).uniq - @recipients)
-    subject "[#{message.board.project.name} - #{message.board.name} - msg#{message.root.id}] #{message.subject}"
-    body :message => message,
-         :message_url => url_for(message.event_url)
-    render_multipart('message_posted', body)
+    @message = message
+    @message_url = url_for(message.event_url)
+    mail(:to => message.recipients, :cc => ((message.root.watcher_recipients + message.board.watcher_recipients).uniq - @recipients), :subject => "[#{message.board.project.name} - #{message.board.name} - msg#{message.root.id}] #{message.subject}")
   end
-  
-  # Builds a tmail object used to email the recipients of a project of the specified wiki content was added. 
+
+  # Builds a tmail object used to email the recipients of a project of the specified wiki content was added.
   #
   # Example:
   #   wiki_content_added(wiki_content) => tmail object
@@ -174,15 +160,12 @@ class Mailer < ActionMailer::Base
     redmine_headers 'Project' => wiki_content.project.identifier,
                     'Wiki-Page-Id' => wiki_content.page.id
     message_id wiki_content
-    recipients wiki_content.recipients
-    cc(wiki_content.page.wiki.watcher_recipients - recipients)
-    subject "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_added, :page => wiki_content.page.pretty_title)}"
-    body :wiki_content => wiki_content,
-         :wiki_content_url => url_for(:controller => 'wiki', :action => 'index', :id => wiki_content.project, :page => wiki_content.page.title)
-    render_multipart('wiki_content_added', body)
+    @wiki_content = wiki_content
+    @wiki_content_url = url_for(:controller => 'wiki', :action => 'index', :id => wiki_content.project, :page => wiki_content.page.title)
+    mail(:to => wiki_content.recipients, :cc => wiki_content.page.wiki.watcher_recipients - wiki_content.recipients, :subject => "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_added, :page => wiki_content.page.pretty_title)}")
   end
-  
-  # Builds a tmail object used to email the recipients of a project of the specified wiki content was updated. 
+
+  # Builds a tmail object used to email the recipients of a project of the specified wiki content was updated.
   #
   # Example:
   #   wiki_content_updated(wiki_content) => tmail object
@@ -194,9 +177,9 @@ class Mailer < ActionMailer::Base
     recipients wiki_content.recipients
     cc(wiki_content.page.wiki.watcher_recipients + wiki_content.page.watcher_recipients - recipients)
     subject "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_updated, :page => wiki_content.page.pretty_title)}"
-    body :wiki_content => wiki_content,
-         :wiki_content_url => url_for(:controller => 'wiki', :action => 'index', :id => wiki_content.project, :page => wiki_content.page.title),
-         :wiki_diff_url => url_for(:controller => 'wiki', :action => 'diff', :id => wiki_content.project, :page => wiki_content.page.title, :version => wiki_content.version)
+    @wiki_content = wiki_content
+    @wiki_content_url = url_for(:controller => 'wiki', :action => 'index', :id => wiki_content.project, :page => wiki_content.page.title)
+    @wiki_diff_url = url_for(:controller => 'wiki', :action => 'diff', :id => wiki_content.project, :page => wiki_content.page.title, :version => wiki_content.version)
     render_multipart('wiki_content_updated', body)
   end
 
@@ -209,9 +192,9 @@ class Mailer < ActionMailer::Base
     set_language_if_valid user.language
     recipients user.mail
     subject l(:mail_subject_register, Setting.app_title)
-    body :user => user,
-         :password => password,
-         :login_url => url_for(:controller => 'account', :action => 'login')
+    @user = user
+    @password = password
+    @login_url = url_for(:controller => 'account', :action => 'login')
     render_multipart('account_information', body)
   end
 
@@ -224,8 +207,8 @@ class Mailer < ActionMailer::Base
     # Send the email to all active administrators
     recipients User.active.find(:all, :conditions => {:admin => true}).collect { |u| u.mail }.compact
     subject l(:mail_subject_account_activation_request, Setting.app_title)
-    body :user => user,
-         :url => url_for(:controller => 'users', :action => 'index', :status => User::STATUS_REGISTERED, :sort_key => 'created_on', :sort_order => 'desc')
+    @user = user
+    @url = url_for(:controller => 'users', :action => 'index', :status => User::STATUS_REGISTERED, :sort_key => 'created_on', :sort_order => 'desc')
     render_multipart('account_activation_request', body)
   end
 
@@ -238,8 +221,8 @@ class Mailer < ActionMailer::Base
     set_language_if_valid user.language
     recipients user.mail
     subject l(:mail_subject_register, Setting.app_title)
-    body :user => user,
-         :login_url => url_for(:controller => 'account', :action => 'login')
+    @user = user
+    @login_url = url_for(:controller => 'account', :action => 'login')
     render_multipart('account_activated', body)
   end
 
@@ -247,8 +230,8 @@ class Mailer < ActionMailer::Base
     set_language_if_valid(token.user.language)
     recipients token.user.mail
     subject l(:mail_subject_lost_password, Setting.app_title)
-    body :token => token,
-         :url => url_for(:controller => 'account', :action => 'lost_password', :token => token.value)
+    @token = token
+    @url = url_for(:controller => 'account', :action => 'lost_password', :token => token.value)
     render_multipart('lost_password', body)
   end
 
@@ -256,8 +239,8 @@ class Mailer < ActionMailer::Base
     set_language_if_valid(token.user.language)
     recipients token.user.mail
     subject l(:mail_subject_register, Setting.app_title)
-    body :token => token,
-         :url => url_for(:controller => 'account', :action => 'activate', :token => token.value)
+    @token = token
+    @url = url_for(:controller => 'account', :action => 'activate', :token => token.value)
     render_multipart('register', body)
   end
 
@@ -265,7 +248,7 @@ class Mailer < ActionMailer::Base
     set_language_if_valid(user.language)
     recipients user.mail
     subject 'Redmine test'
-    body :url => url_for(:controller => 'welcome')
+    @url = url_for(:controller => 'welcome')
     render_multipart('test', body)
   end
 
@@ -276,7 +259,7 @@ class Mailer < ActionMailer::Base
     return false if (recipients.nil? || recipients.empty?) &&
                     (cc.nil? || cc.empty?) &&
                     (bcc.nil? || bcc.empty?)
-                    
+
     # Set Message-Id and References
     if @message_id_object
       mail.message_id = self.class.message_id_for(@message_id_object)
@@ -284,7 +267,7 @@ class Mailer < ActionMailer::Base
     if @references_objects
       mail.references = @references_objects.collect {|o| self.class.message_id_for(o)}
     end
-    
+
     # Log errors when raise_delivery_errors is set to false, Rails does not
     raise_errors = self.class.raise_delivery_errors
     self.class.raise_delivery_errors = true
@@ -324,7 +307,7 @@ class Mailer < ActionMailer::Base
       deliver_reminder(assignee, issues, days) unless assignee.nil?
     end
   end
-  
+
   # Activates/desactivates email deliveries during +block+
   def self.with_deliveries(enabled = true, &block)
     was_enabled = ActionMailer::Base.perform_deliveries
@@ -340,7 +323,7 @@ class Mailer < ActionMailer::Base
     @initial_language = current_language
     set_language_if_valid Setting.default_language
     from Setting.mail_from
-    
+
     # Common headers
     headers 'X-Mailer' => 'Redmine',
             'X-Redmine-Host' => Setting.host_name,
@@ -363,11 +346,11 @@ class Mailer < ActionMailer::Base
       recipients.delete(@author.mail) if recipients
       cc.delete(@author.mail) if cc
     end
-    
+
     notified_users = [recipients, cc].flatten.compact.uniq
     # Rails would log recipients only, not cc and bcc
     mylogger.info "Sending email notification to: #{notified_users.join(', ')}" if mylogger
-    
+
     # Blind carbon copy recipients
     if Setting.bcc_recipients?
       bcc(notified_users)
@@ -383,45 +366,34 @@ class Mailer < ActionMailer::Base
   #
   # https://rails.lighthouseapp.com/projects/8994/tickets/2338-actionmailer-mailer-views-and-content-type
   # https://rails.lighthouseapp.com/projects/8994/tickets/1799-actionmailer-doesnt-set-template_format-when-rendering-layouts
-  
-  def render_multipart(method_name, body)
-    if Setting.plain_text_mail?
-      content_type "text/plain"
-      body render(:file => "#{method_name}.text.plain.rhtml", :body => body, :layout => 'mailer.text.plain.erb')
-    else
-      content_type "multipart/alternative"
-      part :content_type => "text/plain", :body => render(:file => "#{method_name}.text.plain.rhtml", :body => body, :layout => 'mailer.text.plain.erb')
-      part :content_type => "text/html", :body => render_message("#{method_name}.text.html.rhtml", body)
-    end
-  end
 
   # Makes partial rendering work with Rails 1.2 (retro-compatibility)
   def self.controller_path
     ''
   end unless respond_to?('controller_path')
-  
+
   # Returns a predictable Message-Id for the given object
   def self.message_id_for(object)
     # id + timestamp should reduce the odds of a collision
     # as far as we don't send multiple emails for the same object
-    timestamp = object.send(object.respond_to?(:created_on) ? :created_on : :updated_on) 
+    timestamp = object.send(object.respond_to?(:created_on) ? :created_on : :updated_on)
     hash = "redmine.#{object.class.name.demodulize.underscore}-#{object.id}.#{timestamp.strftime("%Y%m%d%H%M%S")}"
     host = Setting.mail_from.to_s.gsub(%r{^.*@}, '')
     host = "#{::Socket.gethostname}.redmine" if host.empty?
     "<#{hash}@#{host}>"
   end
-  
+
   private
-  
+
   def message_id(object)
     @message_id_object = object
   end
-  
+
   def references(object)
     @references_objects ||= []
     @references_objects << object
   end
-    
+
   def mylogger
     RAILS_DEFAULT_LOGGER
   end
@@ -435,3 +407,4 @@ module TMail
     end
   end
 end
+

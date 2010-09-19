@@ -22,13 +22,12 @@ class IssueStatus < ActiveRecord::Base
   
   before_destroy :delete_workflows
 
-  validates_presence_of :name
-  validates_uniqueness_of :name
-  validates_length_of :name, :maximum => 30
-  validates_format_of :name, :with => /^[\w\s\'\-]*$/i
-  validates_inclusion_of :default_done_ratio, :in => 0..100, :allow_nil => true
+  validates :name, :presence => true, :uniqueness => true, :length => {:maximum => 30}, :format => {:with => /^[\w\s\'\-]*$/i }
+  validates :default_done_ratio, :inclusion => {:in => 0..100}
 
-  def after_save
+ 
+  after_save :update_all_statuses
+  def update_all_statuses
     IssueStatus.update_all("is_default=#{connection.quoted_false}", ['id <> ?', id]) if self.is_default?
   end  
   

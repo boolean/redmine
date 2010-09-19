@@ -23,9 +23,8 @@ class Board < ActiveRecord::Base
   acts_as_list :scope => :project_id
   acts_as_watchable
   
-  validates_presence_of :name, :description
-  validates_length_of :name, :maximum => 30
-  validates_length_of :description, :maximum => 255
+  validates :name, :presence => true, :length => {:maximum => 30}
+  validates :description, :presence => true, :length => {:maximum => 255}
   
   def visible?(user=User.current)
     !user.nil? && user.allowed_to?(:view_messages, project)

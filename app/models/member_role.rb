@@ -23,8 +23,8 @@ class MemberRole < ActiveRecord::Base
 
   after_create :add_role_to_group_users
   after_destroy :remove_role_from_group_users
-  
-  validates_presence_of :role
+ 
+  validates :role, :presence => true
   
   def validate
     errors.add :role_id, :invalid if role && !role.member?
